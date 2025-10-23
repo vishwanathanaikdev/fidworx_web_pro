@@ -1,0 +1,137 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* src/custom.css */
+:root {
+    --primary-color: #3ea814; /* Custom indigo shade */
+}
+  
+  .custom-title {
+    color: var(--primary-color);
+  }
+
+
+
+  /* src/custom.css */
+@keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .animate-bounce {
+    animation: bounce 2s ease-in-out infinite;
+  }
+  
+
+  /* src/custom.css */
+
+@keyframes scroll {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+  
+  .animate-scroll {
+    animation: scroll 20s linear infinite;
+  }
+
+  .animate-scroll:hover {
+    animation-play-state: paused;
+  }
+
+
+/* Glowing Text with Light Shadow and Thin Font */
+.glow-text {
+  font-family: 'Poppins', sans-serif;  /* Use Poppins or any other preferred font */
+  font-weight: 100;  /* Thin font weight */
+  color: white;
+  text-shadow: 0 0 3px #fff, 0 0 5px #fff, 0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5);
+  animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 3px #fff, 0 0 5px #fff, 0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.5);
+  }
+  100% {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+  }
+}
+
+
+/* for scrol text
+/* custom.css */
+
+/* custom.css */
+
+/* Define the yellow and bold text */
+/* custom.css */
+
+/* custom.css */
+
+/* custom.css */
+
+/* custom.css */
+
+/* Container for scrolling text with a fixed width */
+/* custom.css */
+
+/* Container for scrolling text with a fixed width */
+.scroll-vertical-container {
+  width: 350px; /* Set a fixed width for the scrolling text */
+  overflow: hidden;
+
+}
+
+/* Yellow and bold text with vertical scrolling */
+.yellow-bold-text {
+  color: yellow;
+  font-weight: bold;
+  display: inline-block;
+  height: 1.5em; /* Adjust the height for visibility */
+  line-height: 1.5em; /* Same as height to keep text aligned */
+  overflow: hidden;
+  position: relative;
+  animation: scrollFadeInOut 3s ease-in-out infinite;
+  white-space: nowrap;
+  font-size: 43px; /* Set the font size to 38px */
+}
+
+/* Keyframes for vertical scrolling with fade-in and fade-out */
+@keyframes scrollFadeInOut {
+  0% {
+    transform: translateY(100%); /* Start from below */
+    opacity: 0; /* Start invisible */
+  }
+  30% {
+    transform: translateY(0); /* Center the text */
+    opacity: 1; /* Fade in */
+  }
+  70% {
+    transform: translateY(0); /* Keep the text centered */
+    opacity: 1; /* Fully visible */
+  }
+  100% {
+    transform: translateY(-100%); /* Move the text out upwards */
+    opacity: 0; /* Fade out */
+  }
+}
+
+
+
+
+
+
+
+
+
+
+  
+  
