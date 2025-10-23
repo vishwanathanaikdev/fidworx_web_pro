@@ -1,0 +1,1 @@
+import{j as e}from"./index-85IIvyDu.js";function n(){return e.jsx("div",{className:"h-screen flex items-center justify-center bg-green-100",children:e.jsx("h1",{className:"text-3xl font-bold text-green-800",children:"Comming Soon 📒"})})}export{n as default};
