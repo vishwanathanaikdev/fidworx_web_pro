@@ -30,7 +30,7 @@ function MobileFilters({
     city: cities,
     zone: zones,
     locationOfProperty: locations,
-    priceRange: priceOptions.map((opt) => opt.display),
+    priceRange: priceOptions.map((opt) => opt.value),
     areaSqft: areaOptions.map((opt) => opt.display),
     seatingCapacity: seatingOptions.map((opt) => opt.display),
     furnishingLevel: ["Ready to Move", "Fully Furnished", "Semi Furnished"],

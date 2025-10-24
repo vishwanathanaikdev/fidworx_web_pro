@@ -172,7 +172,7 @@ const WishlistSidebar = ({ visitorId: initialVisitorId, onLoginRequired, onLogou
     <h3 className="text-sm uppercase font-semibold text-white tracking-wider mb-3">
       Notifications
     </h3>
-    <div className="h-[200px] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+    <div className="h-[160px] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
       {notifications.map((n) => {
         const time = n.createdAt
           ? new Date(n.createdAt).toLocaleTimeString([], {

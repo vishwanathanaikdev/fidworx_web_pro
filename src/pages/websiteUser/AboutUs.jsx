@@ -115,11 +115,11 @@ export default function AboutUs() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       {/* 🔹 Header */}
       <div className="w-full h-[85px] bg-[#16607B]/30 backdrop-blur-sm flex items-center justify-between px-4 fixed top-0 left-0 z-50">
-        <div className="z-10 text-lg font-bold tracking-wide text-white left-4">
-          <h1 className="text-6xl font-bold text-center text-white glow-text drop-shadow-lg">
+      <div className="z-10 text-lg font-bold tracking-wide text-white left-4">
+        <h1 className="text-4xl font-bold text-center text-white glow-text drop-shadow-lg">
             FidWorx
           </h1>
-        </div>
+</div>
 
         <div className="flex items-center gap-6 text-sm text-white">
           <Link to="/" className="transition hover:text-orange-400">

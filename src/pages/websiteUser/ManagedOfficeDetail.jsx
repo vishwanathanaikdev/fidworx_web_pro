@@ -59,7 +59,8 @@ const ManagedOfficeDetail = ({ city = "Bangalore" }) => {
       const [user, setUser] = useState(null);
       const [userId, setUserId] = useState(null);
       const [officeId, setOfficeId] = useState(null);
-    
+      const [selectedOffice, setSelectedOffice] = useState(office);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ fullName: "", email: "", mobile: "" });
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
@@ -283,6 +284,33 @@ const handleRelatedPropertyClick = async (property) => {
     };
     
      // Floors list (assuming it's coming as array, else split string)
+
+
+     // Helper function to extract lat/lng from a Google Maps link
+function getEmbedLink(rawLink) {
+  if (!rawLink) return "";
+
+  // Try to match "@lat,lng," pattern
+  let match = rawLink.match(/@([-0-9.]+),([-0-9.]+)/);
+  if (match) {
+    const lat = match[1];
+    const lng = match[2];
+    return `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
+  }
+
+  // Fallback: try "!3dLAT!4dLNG" pattern
+  match = rawLink.match(/!3d([-0-9.]+)!4d([-0-9.]+)/);
+  if (match) {
+    const lat = match[1];
+    const lng = match[2];
+    return `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
+  }
+
+  // If parsing fails, return original link (not embeddable)
+  return rawLink;
+}
+
+
   return (
 
 <div className=" h-screen w-full">
@@ -299,22 +327,22 @@ const handleRelatedPropertyClick = async (property) => {
 {/* Breadcrumb Navigation */}
 <div className="px-6 mt-4">
   <h1 className="text-[18px] font-bold text-orange-500 flex items-center gap-2">
-    <span className="cursor-pointer hover:underline">Home</span>
+    <Link to="/" className="cursor-pointer hover:underline">Home</Link>
     <span className="text-gray-500">{'>'}</span>
 
     {/* Show type dynamically */}
     {office?.type === "managed" && (
-      <span className="cursor-pointer hover:underline">Managed Space</span>
+      <Link to="/menu" className="cursor-pointer hover:underline">Managed Space</Link>
     )}
     {office?.type === "office" && (
-      <span className="cursor-pointer hover:underline">Office Space</span>
+      <Link className="cursor-pointer hover:underline">Office Space</Link>
     )}
     {office?.type === "co-working" && (
-      <span className="cursor-pointer hover:underline">Co Working Space</span>
+      <Link to="/menu" className="cursor-pointer hover:underline">Co Working Space</Link>
     )}
 
     <span className="text-gray-500">{'>'}</span>
-    <span className="text-orange">{office?.buildingName}</span>
+    <Link className="text-orange">{office?.buildingName}</Link>
   </h1>
 </div>
       {/* Left + Right Side Section */}
@@ -732,25 +760,40 @@ const handleRelatedPropertyClick = async (property) => {
 {/* Placeholder Box */}
 <div className="mt-5 w-full max-w-[890px] min-h-[400px] bg-black p-4 flex gap-4">
   {/* Left side: Google Maps */}
-  <div className="flex-1">
-  {office?.location?.link ? (
-<iframe
-  width="100%"
-  height="400"
-  style={{ border: 0 }}
-  loading="lazy"
-  allowFullScreen
-  referrerPolicy="no-referrer-when-downgrade"
-  src={
-    coords
-      ? `https://www.google.com/maps/embed/v1/place?key=AIzaSyA37ZueJby7P9oCrPv_rfJoSo69clN3xW8&q=${coords}`
-      : ""
-  }
-/>
-  ) : (
-    <p className="text-white">No map link available</p>
-  )}
+ 
+
+<div className="flex-1 rounded-1xl shadow-md overflow-hidden">
+
+  <div className="h-85 w-full">
+    <iframe
+      title="office-location"
+      src={getEmbedLink(office?.location?.link)}
+      width="100%"
+      height="100%"
+      allowFullScreen
+      loading="lazy"
+      className="border-0 rounded-t-1xl"
+    ></iframe>
+  </div>
+
+  <div className="p-2 flex justify-center bg-transparent">
+    {office?.location?.link && (
+      <a
+        href={office.location.link.startsWith("http") ? office.location.link : `https://${office.location.link}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block px-2 py-1.5 text-xs font-small bg-[#16607B] text-white rounded-md hover:bg-[#1a7598] transition-colors duration-200"
+      >
+        View on Map
+      </a>
+    )}
+  </div>
 </div>
+
+
+
+
+
 
 
   {/* Right side (empty for now) */}
@@ -1119,6 +1162,1250 @@ const handleRelatedPropertyClick = async (property) => {
 }
 
 export default ManagedOfficeDetail
+
+
+
+
+
+
+
+
+//===>> Map implemented
+
+
+
+// import React, { useState, useEffect, useRef } from "react";
+// // import { mockOfficeData } from "../data/mockOfficeData"; 
+// import { getManagedOfficeById } from "../../api/services/managedOfficeService";
+// import { Link,useLocation } from "react-router-dom";
+// import { getOfficeSpaceById } from "../../api/services/officeSpaceService";
+// import { getCoWorkingSpaceById } from "../../api/services/coWorkingSpaceService";
+// import Cookies from "js-cookie";
+// import { postVisitorData, postLeadData } from "../../api/services/visitorService";
+// // import { MapPin, ChevronLeft, ChevronRight , Bookmark, Check,  } from "lucide-react";
+// import { useParams } from "react-router-dom";
+// import { getUserDataById } from "../../api/services/userService";
+
+// import GroupsScroller from "../../components/GroupsScroller";
+// import OfficeHero from "../../components/OfficeHero";
+// import AuthModal from "./component/AuthModal";
+// import LeadEnquiryModal from "./component/LeadEnquiryModal";
+
+
+// import {
+//   MapPin,
+//   ChevronLeft,
+//   ChevronRight,
+//   Bookmark,
+//   Car,               // 🚗 Parking
+//   DoorOpen,          // 🚪 Reception Area
+//   Toilet,            // 🚻 Washrooms
+//   FireExtinguisher,  // 🔥 Fire Extinguisher
+//   Shield,            // 🛡️ Security
+//   Zap,               // ⚡ Power Backup
+//   Wind,  
+//   HeartPulse,
+//   Armchair,            // 🪑 Chairs & Desks
+//   BarChart3,      // 📊 Meeting Rooms
+//   Utensils,         // ❄️ Air Conditioning
+//   Monitor,           // 💻 Private Cabin
+//   Users,              
+//   Check,
+
+// } from "lucide-react";
+// import { FaSubway, FaBus, FaTrain, FaPlane, FaHospital, FaUtensils, FaMoneyCheckAlt } from "react-icons/fa";
+// import { ChevronDown, ChevronUp } from "lucide-react";
+
+// const ManagedOfficeDetail = ({ city = "Bangalore" }) => {
+//      const { id } = useParams();
+//       const location = useLocation();
+//       const searchParams = new URLSearchParams(location.search);
+//       const category = searchParams.get("category") || "managed"; 
+    
+//       const [office, setOffice] = useState(null);
+//       const [loading, setLoading] = useState(true);
+//       const [activeTab, setActiveTab] = useState("transit"); // default Transit
+//       // const [expanded, setExpanded] = useState(null); // which label is expanded
+//       const [expanded, setExpanded] = useState({
+//         hospitals: false,
+//         restaurants: false,
+//         atms: false,
+//       });
+    
+//       const [user, setUser] = useState(null);
+//       const [userId, setUserId] = useState(null);
+//       const [officeId, setOfficeId] = useState(null);
+    
+//     const [isModalOpen, setIsModalOpen] = useState(false);
+//     const [formData, setFormData] = useState({ fullName: "", email: "", mobile: "" });
+//     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+//     const [leadMessage, setLeadMessage] = useState("");
+//     const visitorId = Cookies.get("visitorId");
+//     const isRestricted = !visitorId;
+//     const [showFloors, setShowFloors] = useState(false);
+//       // Modal states
+//   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+//   //related card
+// const [relatedProperties, setRelatedProperties] = useState([]);
+// const [relatedCity, setRelatedCity] = useState("");
+ 
+//     useEffect(() => {
+//       fetchOffice();
+//     }, [id, category]);
+    
+
+//     useEffect(() => {
+//       const state = location.state || {};
+//       const city = state.city || "";
+//       const properties = state.relatedProperties || [];
+    
+//       console.log("City from state:", city);
+//       setRelatedCity(city);
+//       const filtered = properties.filter(item => item.location?.city === city);
+//       setRelatedProperties(filtered);
+//     }, [location.state]);
+    
+//       const fetchOffice = async () => {
+//         try {
+//           let res = null;
+
+//           if (category === "managed") {
+//             res = await getManagedOfficeById(id);
+//           } else if (category === "office") {
+//             res = await getOfficeSpaceById(id);
+//           } else if (category === "co-working") {
+//             res = await getCoWorkingSpaceById(id);
+//           }
+      
+//           setOffice(res);
+//           setUserId(res?.assigned_agent?._id);
+//           setOfficeId(res?._id);
+//         } catch (error) {
+//           console.error("Error fetching office detail:", error);
+//         } finally {
+//           setLoading(false);
+//         }
+//       };
+      
+    
+//       console.log("@@@@@@@@@@###########==============",userId)
+//       useEffect(() => {
+//         const fetchUser = async () => {
+//           try {
+//             if (userId) {
+//               const userData = await getUserDataById(userId);
+//               setUser(userData);
+//             }
+//           } catch (err) {
+//             console.error("Failed to fetch user:", err);
+//           }
+//         };
+    
+//         fetchUser();
+//       }, [userId]);
+    
+//     console.log("OFFICEEEEEEEEE data",user)
+//     console.log("OFFICEEEEEEEEE data",office?.location?.link)
+
+
+
+//     // // Function to handle clicking on a related property card
+// const handleRelatedPropertyClick = async (property) => {
+//   setOffice(property);
+//   setOfficeId(property._id);
+//   setUserId(property.assigned_agent || null);
+
+//   if (property.assigned_agent) {
+//     try {
+//       const userData = await getUserDataById(property.assigned_agent);
+//       setUser(userData);
+//     } catch (err) {
+//       console.error("Failed to fetch user for selected property:", err);
+//       setUser(null);
+//     }
+//   } else {
+//     setUser(null);
+//   }
+
+//   window.scrollTo({ top: 0, behavior: "smooth" });
+// };
+//       if (loading) return <p className="p-6">Loading...</p>;
+//       if (!office) return <p className="p-6 text-red-600">Office not found</p>;
+    
+    
+    
+//       //icons
+//       const amenitiesIcons = {
+//         parking: { icon: Car, label: "Parking" },
+//         receptionArea: { icon: DoorOpen, label: "Reception Area" },
+//         washrooms: { icon: Toilet, label: "Washrooms" },
+//         fireExtinguisher: { icon: FireExtinguisher, label: "Fire Extinguisher" },
+//         security: { icon: Shield, label: "Security" },
+//         powerBackup: { icon: Zap, label: "Power Backup" },
+//         airConditioners: { icon: Wind, label: "Air Conditioning" },
+//         privateCabin: { icon: Monitor, label: "Private Cabin" },
+//         recreationArea: { icon: Users, label: "Recreation Area" },
+//         firstAidKit: { icon: HeartPulse, label: "First Aid Kit" },
+//         pantryArea: { icon: Utensils, label: "Pantry Area" },
+//         chairsDesks: { icon: Armchair, label: "Chairs & Desks" },
+//         meetingRooms: { icon: BarChart3, label: "Meeting Rooms" },
+//       };
+    
+    
+//       function extractLatLng(link) {
+//         // Try to match coordinates after '@'
+//         let match = link.match(/@([-0-9.]+),([-0-9.]+)/);
+        
+//         if (!match) {
+//           // Fallback: try matching !3dLAT!4dLNG (some URLs use this format)
+//           match = link.match(/!3d([-0-9.]+)!4d([-0-9.]+)/);
+//         }
+      
+//         if (match) {
+//           return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+//         }
+//         return null;
+//       }
+      
+//       const url = "https://www.google.com/maps/place/Shree+Banashankari+Devi+Temple/@12.94295,77.5251944,13208m/data=!3m1!1e3!4m10!1m2!2m1!1sbanashankari+temple+location!3m6!1s0x3bae3e25b3e186b1:0x530077327406000f!8m2!3d12.915605!4d77.5732254!15sChxiYW5hc2hhbmthcmkgdGVtcGxlIGxvY2F0aW9uWhUiE2JhbmFzaGFua2FyaSB0ZW1wbGWSAQxoaW5kdV90ZW1wbGWqATwQATIfEAEiG2cAIKyXgR-hIf-gNb51cCI8R9Z7JqLDR1WTtTIXEAIiE2JhbmFzaGFua2FyaSB0ZW1wbGXgAQA!16s%2Fg%2F11dfldc10j?entry=ttu&g_ep=EgoyMDI1MDgyNS4wIKXMDSoASAFQAw%3D%3D";
+      
+//       const coords = extractLatLng(url);
+      
+//       if (coords) {
+//         const embedUrl = `https://www.google.com/maps/embed/v1/view?key=AIzaSyA37ZueJby7P9oCrPv_rfJoSo69clN3xW8&center=${coords.lat},${coords.lng}&zoom=15&maptype=roadmap`;
+//         console.log("Embed URL:", embedUrl);
+//       }
+      
+//       const toggleExpand = (key) => {
+//         setExpanded(expanded === key ? null : key);
+//       };
+      
+    
+    
+//     //visitor handlers
+//     const handleContactQuoteClick = () => {
+//       const visitorId = Cookies.get("visitorId");
+//       if (visitorId) {
+//         // If cookie exists → open Lead Modal instead of alert
+//         setIsLeadModalOpen(true);
+//       } else {
+//         // Else → open Login modal
+//         setIsModalOpen(true);
+//       }
+//     };
+    
+    
+//     const handleContactQuote = async () => {
+//       const visitorId = Cookies.get("visitorId");
+    
+//       if (visitorId) {
+//         console.log("Visitor already exists with ID:", visitorId);
+//         alert("Visitor already exists, we will reach you.");
+//         return; // stop here
+//       }
+    
+//       // else open form modal
+//       setIsModalOpen(true);
+//     };
+    
+//     const handleFormSubmit = async (e) => {
+//       e.preventDefault();
+    
+//       try {
+//         const res = await postVisitorData(formData);
+//         console.log("Visitor created:", res);
+    
+//         // store visitorId in cookies
+//         Cookies.set("visitorId", res.data._id, { expires: 7 }); // expires in 7 days
+    
+//         alert("Thanks for login. Quote request submitted successfully!");
+//         setIsModalOpen(false);
+//       } catch (error) {
+//         console.error("Error submitting quote:", error);
+//         alert("Something went wrong, please try again.");
+//       }
+//     };
+    
+
+//     const handleContactClick = () => {
+//       const visitor = Cookies.get("visitorId");
+//       if (visitor) {
+//         setIsLeadModalOpen(true);
+//       } else {
+//         setIsAuthModalOpen(true);
+//       }
+//     };
+    
+//     const handleLeadSubmit = async (messageToSend) => {
+//       const visitorId = Cookies.get("visitorId");
+//       if (!visitorId) return false;
+    
+//       try {
+//         const leadData = {
+//           propertyId: officeId,
+//           visitorId: visitorId,
+//           assignedAgentId: userId,
+//           message: messageToSend ?? leadMessage, // use passed message or fallback
+//         };
+    
+//         await postLeadData(leadData);
+//         setLeadMessage(""); // reset message
+//         return true;
+//       } catch (error) {
+//         console.error("Error submitting lead:", error);
+//         return false;
+//       }
+//     };
+    
+//      // Floors list (assuming it's coming as array, else split string)
+
+
+//      // Helper function to extract lat/lng from a Google Maps link
+// function getEmbedLink(rawLink) {
+//   if (!rawLink) return "";
+
+//   // Try to match "@lat,lng," pattern
+//   let match = rawLink.match(/@([-0-9.]+),([-0-9.]+)/);
+//   if (match) {
+//     const lat = match[1];
+//     const lng = match[2];
+//     return `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
+//   }
+
+//   // Fallback: try "!3dLAT!4dLNG" pattern
+//   match = rawLink.match(/!3d([-0-9.]+)!4d([-0-9.]+)/);
+//   if (match) {
+//     const lat = match[1];
+//     const lng = match[2];
+//     return `https://www.google.com/maps?q=${lat},${lng}&output=embed`;
+//   }
+
+//   // If parsing fails, return original link (not embeddable)
+//   return rawLink;
+// }
+
+
+//   return (
+
+// <div className=" h-screen w-full">
+// <OfficeHero
+//   office={{ office }}
+//   onLoginRequired={() => {
+//     setIsAuthModalOpen(true);
+//     setIsLeadModalOpen(false); // hide wishlist if open
+//   }}
+//   onLogout={() => {
+//     Cookies.remove("visitorId");
+//   }}
+// />
+// {/* Breadcrumb Navigation */}
+// <div className="px-6 mt-4">
+//   <h1 className="text-[18px] font-bold text-orange-500 flex items-center gap-2">
+//     <Link to="/" className="cursor-pointer hover:underline">Home</Link>
+//     <span className="text-gray-500">{'>'}</span>
+
+//     {/* Show type dynamically */}
+//     {office?.type === "managed" && (
+//       <Link to="/menu" className="cursor-pointer hover:underline">Managed Space</Link>
+//     )}
+//     {office?.type === "office" && (
+//       <Link className="cursor-pointer hover:underline">Office Space</Link>
+//     )}
+//     {office?.type === "co-working" && (
+//       <Link to="/menu" className="cursor-pointer hover:underline">Co Working Space</Link>
+//     )}
+
+//     <span className="text-gray-500">{'>'}</span>
+//     <Link className="text-orange">{office?.buildingName}</Link>
+//   </h1>
+// </div>
+//       {/* Left + Right Side Section */}
+//       <div className="w-full px-6 mt-10 flex flex-col lg:flex-row gap-6">
+//         {/* Left Side - Managed Office all data section */}
+//         <div className="flex-1 flex flex-col gap-6">
+//    {/* Office Detail Section */}
+//    <div className="mt-[2px] flex flex-col items-start space-y-[5px]">
+//   {/* Building Name */}
+//   <h1 className="text-[25px] font-bold text-gray-900">
+//     {office?.buildingName} ({category})
+//   </h1>
+
+//   {/* Location with icon */}
+//   <div className="flex items-center gap-2 text-[16px] text-gray-700">
+//     <svg
+//       xmlns="http://www.w3.org/2000/svg"
+//       className="w-5 h-5 text-orange-500"
+//       fill="none"
+//       viewBox="0 0 24 24"
+//       stroke="currentColor"
+//     >
+//       <path
+//         strokeLinecap="round"
+//         strokeLinejoin="round"
+//         strokeWidth={2}
+//         d="M12 11c1.656 0 3-1.344 3-3S13.656 5 12 5 9 6.344 9 8s1.344 3 3 3z"
+//       />
+//       <path
+//         strokeLinecap="round"
+//         strokeLinejoin="round"
+//         strokeWidth={2}
+//         d="M12 22s8-4.5 8-12a8 8 0 10-16 0c0 7.5 8 12 8 12z"
+//       />
+//     </svg>
+//     <span>{office?.location?.locationOfProperty}</span>
+//   </div>
+
+//   {/* Category Based Info */}
+//   {category === "Office" && (
+//     <div className="flex items-center gap-8 text-[16px] text-gray-700">
+//       {/* Furnishing Level */}
+//       <div className="flex items-center gap-2">
+//         <svg
+//           xmlns="http://www.w3.org/2000/svg"
+//           className="w-5 h-5 text-orange-500"
+//           fill="none"
+//           viewBox="0 0 24 24"
+//           stroke="currentColor"
+//         >
+//           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+//         </svg>
+//         <span>{office?.generalInfo?.furnishingLevel}</span>
+//       </div>
+
+//       {/* Area Sqft */}
+//       <div className="flex items-center gap-2">
+//         <svg
+//           xmlns="http://www.w3.org/2000/svg"
+//           className="w-5 h-5 text-orange-500"
+//           fill="none"
+//           viewBox="0 0 24 24"
+//           stroke="currentColor"
+//         >
+//           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+//         </svg>
+//         <span>{office?.location?.areaSqft} sqft</span>
+//       </div>
+//     </div>
+//   )}
+
+//   {category === "Warehouse" && (
+//     <div className="flex items-center gap-8 text-[16px] text-gray-700">
+//       {/* Warehouse Type */}
+//       <div className="flex items-center gap-2">
+//         <span>Type: {office?.warehouseInfo?.type}</span>
+//       </div>
+//       {/* Capacity */}
+//       <div className="flex items-center gap-2">
+//         <span>Capacity: {office?.warehouseInfo?.capacity} tons</span>
+//       </div>
+//     </div>
+//   )}
+
+//   {category === "Retail" && (
+//     <div className="flex items-center gap-8 text-[16px] text-gray-700">
+//       {/* Frontage */}
+//       <div className="flex items-center gap-2">
+//         <span>Frontage: {office?.retailInfo?.frontage} ft</span>
+//       </div>
+//       {/* Floor */}
+//       <div className="flex items-center gap-2">
+//         <span>Floor: {office?.retailInfo?.floor}</span>
+//       </div>
+//     </div>
+//   )}
+// </div>
+
+
+// {/* ===== CENTER DETAILS Section ===== */}
+// <div className="mt-6">
+//   {/* Title with underline */}
+//   <h2 className="text-orange-500 text-[20px] font-bold border-b-2 border-black inline-block pb-1">
+//     CENTER DETAILS
+//   </h2>
+
+//   {/* General Details subtitle */}
+//   <h3 className="text-[16px] font-semibold text-black mt-5">
+//     General Details
+//   </h3>
+
+//   {/* Conditional Rendering for manage type */}
+// {office?.type === "managed" && (
+//   <div className="w-full h-[160px] bg-[#5290A3] p-4">
+//     {/* Two rows of details */}
+//     <div className="grid grid-cols-4 text-white gap-x-6 gap-y-4">
+//       {/* Row 1 */}
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Seater Offered</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.seaterOffered || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Rent Per Seat</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.rentPerSeat
+//             ? `Rs.${office.generalInfo.rentPerSeat}/- Per seat`
+//             : "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Power And Backup</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.powerAndBackup || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Lock In Period</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.lockInPeriod || "N/A"}
+//         </p>
+//       </div>
+
+//       {/* Row 2 */}
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Furnishing Level</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.furnishingLevel || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">OC Availability</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.ocAvailability === true
+//             ? "Yes"
+//             : office?.generalInfo?.ocAvailability === false
+//             ? "No"
+//             : "N/A"}
+//         </p>
+//       </div>
+//     </div>
+//   </div>
+// )}
+
+// {office?.type === "office" && (
+//   <div className="mt-2 w-full max-w-[890px] h-[160px] bg-[#5290A3] p-4">
+//     {/* Two rows of details */}
+//     <div className="grid grid-cols-4 text-white gap-x-6 gap-y-4">
+//       {/* Row 1 */}
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Seater Offered1234</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.seaterOffered || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Rent Per Seat</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.rentPerSeat
+//             ? `Rs.${office.generalInfo.rentPerSeat}/- Per seat`
+//             : "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Floor Size</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.floorSize || "N/A"}
+//         </p>
+//       </div>
+
+// {/* Floors with expand/collapse */}
+// <div className="relative">
+//   <p className="text-white text-[14px] font-regular">Floors</p>
+//   <button
+//     onClick={() => setShowFloors(!showFloors)}
+//     className="flex items-center gap-1 text-[15px] font-bold focus:outline-none"
+//   >
+//     {office?.generalInfo?.floors || "N/A"}
+//     <span className="ml-2 text-[10px] text-white-800 underline">View Floors</span>
+//     {showFloors ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+//   </button>
+
+//   {/* Dropdown (overlapping) */}
+//   {showFloors && (
+//     <ul className="absolute left-0 mt-1 w-44 bg-[#3b7688] rounded-md shadow-lg z-50 p-2">
+//       {(Array.isArray(office?.generalInfo?.floorsName)
+//         ? office.generalInfo.floorsName
+//         : (office?.generalInfo?.floorsName || "").split(",")
+//       ).map((floor, index) => (
+//         <li
+//           key={index}
+//           className="text-[12px] text-white py-1 px-2 hover:bg-[#2e5c6a] rounded"
+//         >
+//           {floor.trim()}
+//         </li>
+//       ))}
+//     </ul>
+//   )}
+// </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Lock In Period</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.lockInPeriod || "N/A"}
+//         </p>
+//       </div>
+
+//       {/* Row 2 */}
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Furnishing Level</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.furnishingLevel || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">OC Availability</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.ocAvailability === true
+//             ? "Yes"
+//             : office?.generalInfo?.ocAvailability === false
+//             ? "No"
+//             : "N/A"}
+//         </p>
+//       </div>
+//     </div>
+//   </div>
+// )}
+
+// {office?.type === "co-working" && (
+//   <div className="mt-2 w-full max-w-[890px] h-[190px] bg-[#5290A3] p-4">
+//     {/* Two rows of details */}
+//     <div className="grid grid-cols-4 text-white gap-x-6 gap-y-4">
+//       {/* Row 1 */}
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Seater Offered</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.seaterOffered || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Rent Per Seat</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.rentPerSeat
+//             ? `Rs.${office.generalInfo.rentPerSeat}/- Per seat`
+//             : "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Desk Type</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.deskTypes || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Lock In Period</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.lockInPeriod || "N/A"}
+//         </p>
+//       </div>
+
+//       {/* Row 2 */}
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Furnishing Level</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.furnishingLevel || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">OC Availability</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.ocAvailability === true
+//             ? "Yes"
+//             : office?.generalInfo?.ocAvailability === false
+//             ? "No"
+//             : "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Day Pass Price</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.dayPassPrice || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Reciption Hours</p>
+//         <p className="text-[15px] font-bold">
+//           {office?.generalInfo?.receptionHours || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Maintanance Charge</p>
+//         <p className="text-[15px] font-bold">
+//          {`Rs.${office.generalInfo.maintenanceCharges}/- ` || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Memebership Plans</p>
+//         <p className="text-[15px] font-bold">
+//          {office?.generalInfo?.membershipPlans || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Mem</p>
+//         <p className="text-[15px] font-bold">
+//          {office?.generalInfo?.membershipPlans || "N/A"}
+//         </p>
+//       </div>
+//       <div>
+//         <p className="text-white text-[14px] font-regular">Rent Price</p>
+//         <p className="text-[15px] font-bold">
+//         {`Rs.${office.generalInfo.rentPrice}/- `|| "N/A"}
+//         </p>
+//       </div>
+//     </div>
+//   </div>
+// )}
+
+
+// {/* ===== ABOUT SECTION ===== */}
+// <div className="mt-6 w-full max-w-[890px] min-h-[250px] bg-slate-100 p-4 shadow-lg rounded-xl">
+//   {/* Top notice bar */}
+//   <div className="w-full h-[30px] flex items-center mb-4">
+//     <p className="text-[16px] text-gray-800 font-bold">
+//       Amenities
+//     </p>
+//   </div>
+
+//   {/* Amenities Grid */}
+//   <div className="grid grid-cols-3 gap-5 text-gray-900">
+//     {Object.entries(amenitiesIcons).map(([key, { icon: Icon, label }]) => {
+//       const value = office?.amenities?.[key];
+//       if (value === true || value === "Yes") {
+//         return (
+//           <div key={key} className="flex items-center gap-2">
+//             <Icon className="w-6 h-6 text-orange-500" />
+//             <span className="text-[14px]">{label}</span>
+//           </div>
+//         );
+//       }
+//       return null;
+//     })}
+//   </div>
+
+//   {/* Bottom notice bar */}
+//   <div className="w-full mt-5 h-[30px] flex items-center">
+//     <p className="text-[10px] text-gray-500 font-medium">
+//       Some amenities are limited and subject to availability at the workspace...
+//     </p>
+//   </div>
+// </div>
+
+
+
+// {/* ===== LOCATION DETAILS SECTION ===== */}
+// <div className="mt-10 ">
+//   {/* Title with underline */}
+//   <h2 className="text-orange-500 text-[20px] font-bold border-b-2 border-black inline-block pb-1">
+//     Location details
+//   </h2>
+
+//   {/* Address with icon */}
+//   <div className="flex items-center gap-2 mt-5">
+//     {/* Location Icon */}
+//     <svg
+//       xmlns="http://www.w3.org/2000/svg"
+//       className="w-5 h-5 text-orange-500"
+//       fill="none"
+//       viewBox="0 0 24 24"
+//       stroke="currentColor"
+//     >
+//       <path
+//         strokeLinecap="round"
+//         strokeLinejoin="round"
+//         strokeWidth="2"
+//         d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2z"
+//       />
+//       <path
+//         strokeLinecap="round"
+//         strokeLinejoin="round"
+//         strokeWidth="2"
+//         d="M12 22s8-4.5 8-12c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 7.5 8 12 8 12z"
+//       />
+//     </svg>
+
+//     <p className="text-[16px] text-orange-500 font-medium">
+//       {office?.location?.address}
+//     </p>
+//   </div>
+
+//   {/* Placeholder Box */}
+//   {/* <div className="mt-5 w-[890px] min-h-[400px] bg-black p-4">
+//   </div> */}
+
+//   {/* Placeholder Box */}
+// {/* Placeholder Box */}
+// <div className="mt-5 w-full max-w-[890px] min-h-[400px] bg-black p-4 flex gap-4">
+//   {/* Left side: Google Maps */}
+//   {/* <div className="flex-1">
+//   {office?.location?.link ? (
+// <iframe
+//   width="100%"
+//   height="400"
+//   style={{ border: 0 }}
+//   loading="lazy"
+//   allowFullScreen
+//   referrerPolicy="no-referrer-when-downgrade"
+//   src={
+//     coords
+//       ? `https://www.google.com/maps/embed/v1/place?key=AIzaSyA37ZueJby7P9oCrPv_rfJoSo69clN3xW8&q=${coords}`
+//       : ""
+//   }
+// />
+//   ) : (
+//     <p className="text-white">No map link available</p>
+//   )}
+// </div> */}
+
+// {/* <div className="flex-1 rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+//   <h3 className="text-lg font-semibold text-gray-800 mb-2 px-4 pt-4">Location</h3>
+
+//   <div className="px-4 pb-4 text-sm text-gray-600">
+//     <p>{office?.location?.address}</p>
+//     <p className="text-gray-500">{office?.location?.city}</p>
+//     <p className="text-gray-500">Zone: {office?.location?.zone}</p>
+//   </div>
+//   <div className="h-64 w-full">
+// <iframe
+//   title="office-location"
+//   src={office?.location?.link}
+//   width="100%"
+//   height="100%"
+//   allowFullScreen=""
+//   loading="lazy"
+//   className="border-0 rounded-b-2xl"
+// ></iframe>
+//   </div>
+// </div> */}
+
+// {/* <div className="flex-1 rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+  
+//   <div className="h-80 w-full">
+//     <iframe
+//       title="office-location"
+//       src={getEmbedLink(office?.location?.link)}
+//       width="100%"
+//       height="100%"
+//       allowFullScreen
+//       loading="lazy"
+//       className="border-0 rounded-t-2xl"
+//     ></iframe>
+//   </div>
+
+// <div className="p-2 flex justify-center">
+//   {office?.location?.link && (
+//     <a
+//       href={office.location.link.startsWith("http") ? office.location.link : `https://${office.location.link}`}
+//       target="_blank"
+//       rel="noopener noreferrer"
+//       className="inline-block px-4 py-2 text-sm font-medium bg-[#16607B] text-white rounded-lg hover:bg-[#1a7598] transition-colors duration-200"
+//     >
+//       View on Map
+//     </a>
+//   )}
+// </div>
+
+// </div> */}
+
+// <div className="flex-1 rounded-1xl shadow-md overflow-hidden">
+//   {/* Map Embed */}
+//   <div className="h-85 w-full">
+//     <iframe
+//       title="office-location"
+//       src={getEmbedLink(office?.location?.link)}
+//       width="100%"
+//       height="100%"
+//       allowFullScreen
+//       loading="lazy"
+//       className="border-0 rounded-t-1xl"
+//     ></iframe>
+//   </div>
+
+//   {/* Button to open actual link */}
+//   <div className="p-2 flex justify-center bg-transparent">
+//     {office?.location?.link && (
+//       <a
+//         href={office.location.link.startsWith("http") ? office.location.link : `https://${office.location.link}`}
+//         target="_blank"
+//         rel="noopener noreferrer"
+//         className="inline-block px-2 py-1.5 text-xs font-small bg-[#16607B] text-white rounded-md hover:bg-[#1a7598] transition-colors duration-200"
+//       >
+//         View on Map
+//       </a>
+//     )}
+//   </div>
+// </div>
+
+
+
+
+
+
+
+//   {/* Right side (empty for now) */}
+//   <div className="flex-1 bg-gray-800 rounded-md">
+//   <div className="flex-1 p-3 text-xs text-white bg-gray-900 rounded-md">
+//       {/* Toggle Header */}
+//       <div className="flex gap-4 text-[14px] mb-3">
+//         <button
+//           className={`pb-1 ${activeTab === "transit" ? "border-b-2 border-orange-500" : ""}`}
+//           onClick={() => setActiveTab("transit")}
+//         >
+//           Transit
+//         </button>
+//         <button
+//           className={`pb-1 ${activeTab === "publicFacilities" ? "border-b-2 border-orange-500" : ""}`}
+//           onClick={() => setActiveTab("publicFacilities")}
+//         >
+//           Public Facilities
+//         </button>
+//       </div>
+
+//       {/* Content */}
+//       {activeTab === "transit" && (
+//         <div className="space-y-2">
+//           {/* Metro */}
+//           <div>
+//             <div
+//               className="flex items-center justify-between text-orange-400 cursor-pointer"
+//               onClick={() => toggleExpand("metro")}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <FaSubway size={14} />
+//                 <span className="text-[10px]">Metro Stations</span>
+//               </div>
+//               {expanded === "metro" ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+//             </div>
+//             {expanded === "metro" && (
+//               <ul className="ml-6 mt-1 space-y-1 text-[10px] text-gray-300">
+//                 {office?.transit?.metroStations?.map((item, idx) => (
+//                   <li key={idx}>{item}</li>
+//                 ))}
+//               </ul>
+//             )}
+//           </div>
+
+//           {/* Bus */}
+//           <div>
+//             <div
+//               className="flex items-center justify-between text-orange-400 cursor-pointer"
+//               onClick={() => toggleExpand("bus")}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <FaBus size={14} />
+//                 <span className="text-[10px]">Bus Stations</span>
+//               </div>
+//               {expanded === "bus" ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+//             </div>
+//             {expanded === "bus" && (
+//               <ul className="ml-6 mt-1 space-y-1 text-[10px] text-gray-300">
+//                 {office?.transit?.busStations?.map((item, idx) => (
+//                   <li key={idx}>{item}</li>
+//                 ))}
+//               </ul>
+//             )}
+//           </div>
+
+//           {/* Train */}
+//           <div>
+//             <div
+//               className="flex items-center justify-between text-orange-400 cursor-pointer"
+//               onClick={() => toggleExpand("train")}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <FaTrain size={14} />
+//                 <span className="text-[10px]">Train Stations</span>
+//               </div>
+//               {expanded === "train" ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+//             </div>
+//             {expanded === "train" && (
+//               <ul className="ml-6 mt-1 space-y-1 text-[10px] text-gray-300">
+//                 {office?.transit?.trainStations?.map((item, idx) => (
+//                   <li key={idx}>{item}</li>
+//                 ))}
+//               </ul>
+//             )}
+//           </div>
+
+//           {/* Airports */}
+//           <div>
+//             <div
+//               className="flex items-center justify-between text-orange-400 cursor-pointer"
+//               onClick={() => toggleExpand("airports")}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <FaPlane size={14} />
+//                 <span className="text-[10px]">Airports</span>
+//               </div>
+//               {expanded === "airports" ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+//             </div>
+//             {expanded === "airports" && (
+//               <ul className="ml-6 mt-1 space-y-1 text-[10px] text-gray-300">
+//                 {office?.transit?.airports?.map((item, idx) => (
+//                   <li key={idx}>{item}</li>
+//                 ))}
+//               </ul>
+//             )}
+//           </div>
+//         </div>
+//       )}
+// {activeTab === "publicFacilities" && (
+//   <div className="space-y-2">
+//     {/* Hospitals */}
+//     <div>
+//       <div
+//         className="flex items-center justify-between text-orange-400 cursor-pointer"
+//         onClick={() => toggleExpand("hospitals")}
+//       >
+//         <div className="flex items-center gap-2">
+//           <FaHospital size={14} />
+//           <span className="text-[10px]">Hospitals</span>
+//         </div>
+//         {expanded === "hospitals" ? (
+//           <ChevronUp size={14} />
+//         ) : (
+//           <ChevronDown size={14} />
+//         )}
+//       </div>
+//       {expanded === "hospitals" && (
+//         <ul className="ml-6 mt-1 space-y-1 text-[10px] text-gray-300">
+//           {office?.publicFacilities?.hospitals?.map((item, idx) => (
+//             <li key={idx}>{item}</li>
+//           ))}
+//         </ul>
+//       )}
+//     </div>
+
+//     {/* Restaurants */}
+//     <div>
+//       <div
+//         className="flex items-center justify-between text-orange-400 cursor-pointer"
+//         onClick={() => toggleExpand("restaurants")}
+//       >
+//         <div className="flex items-center gap-2">
+//           <FaUtensils size={14} />
+//           <span className="text-[10px]">Restaurants</span>
+//         </div>
+//         {expanded === "restaurants" ? (
+//           <ChevronUp size={14} />
+//         ) : (
+//           <ChevronDown size={14} />
+//         )}
+//       </div>
+//       {expanded === "restaurants" && (
+//         <ul className="ml-6 mt-1 space-y-1 text-[10px] text-gray-300">
+//           {office?.publicFacilities?.restaurants?.map((item, idx) => (
+//             <li key={idx}>{item}</li>
+//           ))}
+//         </ul>
+//       )}
+//     </div>
+
+//     {/* ATMs */}
+//     <div>
+//       <div
+//         className="flex items-center justify-between text-orange-400 cursor-pointer"
+//         onClick={() => toggleExpand("atms")}
+//       >
+//         <div className="flex items-center gap-2">
+//           <FaMoneyCheckAlt size={14} />
+//           <span className="text-[10px]">ATMs</span>
+//         </div>
+//         {expanded === "atms" ? (
+//           <ChevronUp size={14} />
+//         ) : (
+//           <ChevronDown size={14} />
+//         )}
+//       </div>
+//       {expanded === "atms" && (
+//         <ul className="ml-6 mt-1 space-y-1 text-[10px] text-gray-300">
+//           {office?.publicFacilities?.atms?.map((item, idx) => (
+//             <li key={idx}>{item}</li>
+//           ))}
+//         </ul>
+//       )}
+//     </div>
+//   </div>
+// )}
+//     </div>
+//   </div>
+// </div>
+// </div>
+// </div>
+//    </div>
+//         {/* Right Side - User Details Card */}
+//      {/* Right Side - User Details Card */}
+// <div className="w-full lg:max-w-[443px] flex-shrink-0">
+//   {/* Intro Text */}
+//   <h2 className="mb-4 text-xs sm:text-sm text-[#374151] font-bold text-center leading-snug">
+//     Upgrade your Space office with Vishwa and Team to get the best price and best deals for your office space.
+//   </h2>
+
+//   {/* Profile Section */}
+//   <div className="flex items-start justify-between w-full min-h-[166px] gap-4">
+//     {/* Left: Profile Image */}
+//     <div className="w-24 h-24 p-1.5 rounded-full border-2 border-gray-300 overflow-hidden flex-shrink-0">
+//       <img
+//         src={user?.profileImage || "https://via.placeholder.com/94"}
+//         alt={user?.fullName || "Handler"}
+//         className="object-cover w-full h-full rounded-full"
+//       />
+//     </div>
+
+//     {/* Right: Profile Details + Button */}
+//     <div className="flex flex-col flex-1 items-center">
+//       <div className="flex flex-col items-center space-y-1 text-center">
+//         <h3 className="text-sm sm:text-base font-bold text-[#374151]">{user?.fullName}</h3>
+//         <p className="text-xs sm:text-sm text-gray-600">{user?.mobile}</p>
+//         <p className="text-xs sm:text-sm text-gray-600">{user?.email}</p>
+//       </div>
+
+//       {isRestricted && (
+//         <button
+//           className="mt-3 w-56 h-8 bg-orange-500 text-white font-bold text-sm rounded-md hover:bg-orange-600 transition"
+//           onClick={(e) => {
+//             e.stopPropagation();
+//             setIsModalOpen(true); // open login modal
+//           }}
+//         >
+//           Contact {user?.fullName?.split(" ")[0]}
+//         </button>
+//       )}
+//     </div>
+//   </div>
+
+//   {/* Info Box */}
+//   <div className="flex justify-center mt-6">
+//     <div className="w-full bg-gray-100 rounded p-3 text-center text-xs sm:text-sm text-gray-700 leading-snug">
+//       Vishwa and team assisted <strong className="font-bold text-gray-900">500+ corporates</strong> in Bangalore to move into their new office.
+//     </div>
+//   </div>
+
+//   {/* Logos Section */}
+//   <div className="flex justify-center items-center mt-3 gap-5 flex-wrap">
+//     {[
+//       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTA9sr6IsCZ-qq-QNd2dQaZOXnIxcR4RxM3yw&s",
+//       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTA9sr6IsCZ-qq-QNd2dQaZOXnIxcR4RxM3yw&s",
+//       "https://static.vecteezy.com/system/resources/previews/054/241/154/non_2x/the-logo-for-the-company-which-is-called-the-green-leaf-vector.jpg",
+//       "https://static.vecteezy.com/system/resources/previews/043/210/641/non_2x/a-person-standing-on-a-green-leaf-create-a-minimalistic-design-symbolizing-health-and-wellness-using-only-basic-shapes-and-colors-free-vector.jpg",
+//       "https://static.vecteezy.com/system/resources/thumbnails/000/091/902/small_2x/free-golden-wings-logo-vector.jpg",
+//     ].map((logo, idx) => (
+//       <img key={idx} src={logo} alt={`Logo${idx}`} className="w-8 h-8 object-contain" />
+//     ))}
+//   </div>
+
+//   {/* Key Points Section */}
+//   <div className="mt-4 text-xs sm:text-sm text-gray-700">
+//     <p className="mb-2 font-bold">Explore workspace solutions with our expert guidance:</p>
+//     <ul className="space-y-2">
+//       {[
+//         "Workspace selection & location strategy",
+//         "Workspace tours",
+//         "Layout design & customization assistance",
+//         "Terms negotiations & deal signing",
+//       ].map((point, idx) => (
+//         <li key={idx} className="flex items-center gap-2">
+//           <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+//           <span>{point}</span>
+//         </li>
+//       ))}
+//     </ul>
+//   </div>
+
+//   {/* Button at bottom center */}
+//   <div className="flex justify-center mt-4">
+//     <button
+//        onClick={handleContactClick}
+//       className="w-56 h-8 bg-orange-500 text-white font-bold text-sm rounded-md hover:bg-orange-600 transition"
+//     >
+//       Contact Quote
+//     </button>
+//   </div>
+// </div>
+
+//       </div>
+//       {/* ==================== Related Properties Section ==================== */}
+// {relatedProperties?.length > 0 && (
+//   <div className="mt-12 px-6">
+//     <h2 className="text-xl font-semibold text-[#222] mb-6">
+//       Other Spaces in {relatedCity}
+//     </h2>
+
+//     {/* Horizontal Scroll Row */}
+//     <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+//       {relatedProperties.map((prop) => (
+//         <div
+//           key={prop._id}
+//           className="relative min-w-[360px] max-w-[380px] rounded-2xl shadow-lg cursor-pointer  transform hover:scale-[1.03] hover:shadow-xl transition-transform duration-300 flex-shrink-0"
+//           onClick={() => handleRelatedPropertyClick(prop)}
+//         >
+//           {/* Image */}
+//           <img
+//             src={
+//               prop.images?.[0] ||
+//               "https://cdn.pixabay.com/photo/2015/04/20/06/46/office-730681_1280.jpg"
+//             }
+//             alt={prop.buildingName}
+//             className="w-full h-64 object-cover"
+//           />
+
+//           {/* Overlay Bottom Info */}
+//           <div className="absolute bottom-0 left-0 w-full bg-black/40 p-4 backdrop-blur-sm">
+//             <h3 className="text-white text-base font-bold truncate">
+//               {prop.buildingName}
+//             </h3>
+//             <p className="text-gray-300 text-sm truncate">
+//               {prop.location?.locationOfProperty}, {prop.location?.zone}
+//             </p>
+//             <p className="text-gray-200 text-sm mt-1">
+//               {prop.generalInfo?.seaterOffered} Seats | ₹
+//               {prop.generalInfo?.rentPerSeat}/seat
+//             </p>
+
+//             <div className="flex flex-wrap gap-2 mt-2">
+//               {prop.generalInfo?.furnishingLevel && (
+//                 <span className="bg-black/30 text-amber-300 text-[11px] px-2 py-0.5 rounded-full">
+//                   {prop.generalInfo.furnishingLevel}
+//                 </span>
+//               )}
+//               {prop.availability_status && (
+//                 <span className="bg-green-200/20 text-green-300 text-[11px] px-2 py-0.5 rounded-full">
+//                   {prop.availability_status}
+//                 </span>
+//               )}
+//             </div>
+//           </div>
+//         </div>
+//       ))}
+//     </div>
+//   </div>
+// )}
+
+//             {/* ✅ Modals */}
+//             {isAuthModalOpen && (
+//         <AuthModal
+//           isOpen={isAuthModalOpen}
+//           onClose={() => setIsAuthModalOpen(false)}
+//           onSuccess={() => {
+//             setIsAuthModalOpen(false);
+//             setIsLeadModalOpen(true);
+//           }}
+//         />
+//       )}
+
+//       {isLeadModalOpen && (
+//         <LeadEnquiryModal
+//           isOpen={isLeadModalOpen}
+//           onClose={() => setIsLeadModalOpen(false)}
+//           onSubmit={handleLeadSubmit}
+//           leadMessage={leadMessage}
+//           setLeadMessage={setLeadMessage}
+//         />
+//       )}
+//     </div>
+
+//   )
+// }
+
+// export default ManagedOfficeDetail
 
 
 

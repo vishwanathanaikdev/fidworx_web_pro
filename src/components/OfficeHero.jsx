@@ -72,7 +72,6 @@ useEffect(() => {
             FidWorx
           </h1>
         </div>
-
         <div className="flex items-center gap-6 text-sm text-white">
           <Link to="/" className="transition hover:text-orange-400">Home</Link>
           <Link to="/menu" className="transition hover:text-orange-400">Explore Spaces</Link>
